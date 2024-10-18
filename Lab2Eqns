@@ -1,0 +1,34 @@
+% Lab2eqns.m
+function ds = eqns(t, s)
+
+% Global variables
+global M Mu K Kt B g A Vc L
+
+p2 = s(1); 
+q6 = s(2); 
+p8 = s(3); 
+q11 = s(4);
+
+T1 = 0;                      
+T2 = T1 + L / (2 * Vc);      
+T3 = T1 + L / Vc;            
+Vamp = 2 * A * Vc / L;   
+
+if t < T1
+   Vi = 0;                
+elseif t >= T1 && t <= T2
+   Vi = Vamp;              
+elseif t > T2 && t <= T3
+   Vi = -Vamp;             
+else
+   Vi = 0;                 
+end
+
+p2_dot = -B/M * p2 - K * q6 + B/Mu * p8 + M * g;
+q6_dot = p2 / M - p8 / Mu;
+p8_dot = B/M * p2 + K * q6 - B/Mu * p8 - Kt * q11 + Mu * g;
+q11_dot = p8 / Mu - Vi;      
+
+ds = [p2_dot; q6_dot; p8_dot; q11_dot];
+end
+
