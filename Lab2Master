@@ -1,0 +1,49 @@
+% Lab2master.m
+clear all;
+close all;
+clc;
+
+global M Mu K Kt B g A Vc L zeta
+
+% Define system parameters
+
+M = 250;       % kg (sprung mass)
+Mu = M / 5;    % kg (unsprung mass)
+K = 1e4;       % N/m
+Kt = 10 * K;   % N/m tire stiffness
+B = 2 * 0.3 * sqrt(K * M);  % N*s/m
+g = 9.81;      % m/s^2
+A = 0.08;      % m depth of pothole
+Vc = 10;       % m/s velocity over the pothole
+L = 1.2;       % m length of pothole
+
+% Initial conditions 
+
+q6_0 = M * g / K;         
+q11_0 = (M + Mu) * g / Kt;
+initial = [0; q6_0; 0; q11_0]; %[p2, q6, p8, q11]
+
+% Time control parameters
+FT = 4; %Time
+
+% Time array for the simulation
+time_array = linspace(0, FT, 1000);
+
+% Call ODE45 solver
+[t, s] = ode45(@Lab2eqns, time_array, initial); 
+
+% Plot 1
+figure;
+plot(t, s(:,2) - q6_0, 'b');
+grid on;
+title('Suspension Deflection');
+xlabel('Time (s)');
+ylabel('Deflection (m)');
+
+% Plot 2
+figure;
+plot(t, s(:,1) / (M * FT * g), 'r'); % kg m/s / kg s (m/s^2)
+grid on;
+title('Mass Acceleration');
+xlabel('Time [s]');
+ylabel('Gravity (9.81) [m/s^2]');
