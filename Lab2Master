@@ -42,7 +42,7 @@ ylabel('Deflection (m)');
 
 % Plot 2
 figure;
-plot(t, s(:,1) / (M * g), 'r'); % kg m/s / kg s (m/s^2)
+plot(t, (-B/M * s(:,1) - K * s(:,2) + B/Mu * s(:,3) + M * g) / (M * g), 'r'); 
 grid on;
 title('Mass Acceleration');
 xlabel('Time [s]');
