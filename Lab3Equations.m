@@ -1,11 +1,7 @@
 function dydt = eqns(t, y)
-    % eqns.m - Equations for the Motocross Pitch-Heave Model
+    % eqns.m 
 
-    % Import global variables
-    global vc Lcg_1 Lcg_2 m_cr r_gy J_cr k_sf k_sr b_sf b_sr ...
-           m_tf m_tr k_tf k_tr L_wb g A delta_max L bump_dist ...
-           t_front_start t_front_apex t_front_end ...
-           t_rear_start t_rear_apex t_rear_end;
+    global vc Lcg_1 Lcg_2 m_cr r_gy J_cr k_sf k_sr b_sf b_sr m_tf m_tr k_tf k_tr L_wb g A delta_max L bump_dist t_front_start t_front_apex t_front_end t_rear_start t_rear_apex t_rear_end;
 
     % Define state variables
     p_J = y(1);             % Pitch angular momentum
