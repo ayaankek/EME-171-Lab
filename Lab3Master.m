@@ -1,14 +1,9 @@
-% master.m - Main setup file for the Motocross Pitch-Heave Model
+% master.m 
 
-% Clear workspace and console
 clear;
 clc;
 
-% Define global variables
-global vc Lcg_1 Lcg_2 m_cr r_gy J_cr k_sf k_sr b_sf b_sr ...
-       m_tf m_tr k_tf k_tr L_wb g A delta_max L bump_dist finish_time ...
-       t_front_start t_front_apex t_front_end ...
-       t_rear_start t_rear_apex t_rear_end step_size;
+global vc Lcg_1 Lcg_2 m_cr r_gy J_cr k_sf k_sr b_sf b_sr m_tf m_tr k_tf k_tr L_wb g A delta_max L bump_dist finish_time t_front_start t_front_apex t_front_end t_rear_start t_rear_apex t_rear_end step_size;
 
 % System parameters
 vc = 10;                    % Cycle forward velocity (m/s)
