@@ -40,7 +40,7 @@ initial = [0; 0; 0; 0; 0; 0; 0; 0];
 
 L = vc * bump_dist;            % distance over the bump
 
-t_front_start = 0;             % Time front tire hits the first bump
+t_front_start = 1;             % Time front tire hits the first bump
 t_front_apex = t_front_start + bump_dist / (2 * vc);
 t_front_end = t_front_start + bump_dist / vc;
 
@@ -67,7 +67,7 @@ time_array = linspace(0, FT, 1000);
 
 % Define road displacement function for sinusoidal bumps
 
-road_displacement = @(t) A * sin(2 * pi * vc * t / bump_dist) .* (t >= t_front_start) .* (t <= t_front_end);
+road_displacement = @(t) A * sin(2 * pi * vc * (t - t_front_start) / bump_dist) .* (t >= t_front_start & t <= t_front_end) + A * sin(2 * pi * vc * (t - t_rear_start) / bump_dist) .* (t >= t_rear_start & t <= t_rear_end);
 
 % Calculate road displacement over the simulation time
 
@@ -80,7 +80,7 @@ y_road = road_displacement(time_array);
 % Plotting results
 
 figure;
-plot(t, s(:,1), t, s(:,2));
+plot(t, s(:,3), t, s(:,4));
 grid on;
 title('Front and Rear Suspension Deflections');
 xlabel('Time (s)');
@@ -88,14 +88,14 @@ ylabel('Deflection (m)');
 legend('Front Suspension', 'Rear Suspension');
 
 figure;
-plot(t, s(:,3), 'r');
+plot(t, s(:,2) / m_cr, 'r');
 grid on;
 title('Heave Velocity');
 xlabel('Time (s)');
 ylabel('Heave Velocity (m/s)');
 
 figure;
-plot(t, s(:,4), 'b');
+plot(t, s(:,1) / m_cr, 'b');
 grid on;
 title('Pitch Angular Velocity');
 xlabel('Time (s)');
