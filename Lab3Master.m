@@ -4,7 +4,7 @@ clear all;
 close all;
 clc;
 
-global vc Lcg_1 Lcg_2 m_cr r_gy J_cr k_sf k_sr b_sf b_sr m_tf m_tr k_tf k_tr L_wb g A delta_max L bump_dist finish_time t_front_start t_front_apex t_front_end t_rear_start t_rear_apex t_rear_end step_size;
+global vc Lcg_1 Lcg_2 m_cr r_gy J_cr k_sf k_sr b_sf b_sr m_tf m_tr k_tf k_tr L_wb g A delta_max L bump_dist FT t_front_start t_front_apex t_front_end t_rear_start t_rear_apex t_rear_end step_size;
 
 
 vc = 10;                    % Cycle forward velocity (m/s)
@@ -38,7 +38,7 @@ initial = [0; 0; 0; 0; 0; 0; 0; 0];
 
 % Bump definition
 
-L = vc * bump_dist;            % Horizontal distance over the bump
+L = vc * bump_dist;            % distance over the bump
 
 t_front_start = 0;             % Time front tire hits the first bump
 t_front_apex = t_front_start + bump_dist / (2 * vc);
@@ -51,13 +51,13 @@ t_rear_end = t_rear_start + bump_dist / vc;
 
 % Time control parameter
 
-natural_frequency = sqrt((k_sf + k_sr) / m_cr);  % Approximate natural frequency
-vibration_period = 1 / natural_frequency;        % Vibration period
+natural_frequency = sqrt((k_sf + k_sr) / m_cr);  
+vibration_period = 1 / natural_frequency;       
 
 
 % Simulation
 
-FT = t_rear_end + 3 * vibration_period;
+FT = t_rear_end + 50 * vibration_period;
 step_size = vibration_period / 10;
 
 
@@ -75,19 +75,22 @@ time_array = linspace(0, FT, 1000);
 
 figure;
 plot(t, s(:,1), t, s(:,2));
+grid on;
 title('Front and Rear Suspension Deflections');
 xlabel('Time (s)');
 ylabel('Deflection (m)');
 legend('Front Suspension', 'Rear Suspension');
 
 figure;
-plot(t, s(:,3));
+plot(t, s(:,3), 'r');
+grid on;
 title('Heave Velocity');
 xlabel('Time (s)');
 ylabel('Heave Velocity (m/s)');
 
 figure;
-plot(t, s(:,4));
+plot(t, s(:,4), 'b');
+grid on;
 title('Pitch Angular Velocity');
 xlabel('Time (s)');
 ylabel('Pitch Angular Velocity (rad/s)');
