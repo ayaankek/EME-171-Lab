@@ -1,0 +1,24 @@
+% Define road displacement as a function of time
+A = 0.1;      % Bump amplitude (meters)
+f_bump = 0.5; % Bump frequency (Hz)
+omega_bump = 2 * pi * f_bump; % Angular frequency
+
+road_displacement = @(t) A * sin(omega_bump * t) .* (t >= 0); % Single bump starts at t=0
+
+
+% Define the simulation time vector
+t_start = 0;
+t_end = 5; % Duration of the simulation in seconds
+dt = 0.01; % Time step
+t = t_start:dt:t_end;
+
+% Evaluate the road displacement over time
+y_road = road_displacement(t);
+
+% Plot the road displacement
+figure;
+plot(t, y_road, 'b-', 'LineWidth', 1.5);
+xlabel('Time (s)');
+ylabel('Road Displacement (m)');
+title('Road Displacement Over Time');
+grid on;
