@@ -67,7 +67,7 @@ time_array = linspace(0, FT, 1000);
 
 % Define road displacement function for sinusoidal bumps
 
-road_displacement = @(t) A * sin(2 * pi * vc * t / bump_dist) .* (t >= t_front_start) .* (t <= t_front_end);
+road_displacement = @(t) A * sin(2 * pi * vc * (t - t_front_start) / bump_dist) .* (t >= t_front_start & t <= t_front_end) + A * sin(2 * pi * vc * (t - t_rear_start) / bump_dist) .* (t >= t_rear_start & t <= t_rear_end);
 
 % Calculate road displacement over the simulation time
 
