@@ -57,7 +57,7 @@ vibration_period = 1 / natural_frequency;
 
 % Simulation
 
-FT = t_rear_end + 50 * vibration_period;
+FT = t_rear_end + 3 * vibration_period;
 step_size = vibration_period / 10;
 
 
@@ -65,11 +65,17 @@ step_size = vibration_period / 10;
 
 time_array = linspace(0, FT, 1000);
 
+% Define road displacement function for sinusoidal bumps
+
+road_displacement = @(t) A * sin(2 * pi * vc * t / bump_dist) .* (t >= t_front_start) .* (t <= t_front_end);
+
+% Calculate road displacement over the simulation time
+
+y_road = road_displacement(time_array);
 
 % Call ODE45 solver
 
 [t, s] = ode45(@Lab3eqns, time_array, initial);
-
 
 % Plotting results
 
@@ -94,3 +100,10 @@ grid on;
 title('Pitch Angular Velocity');
 xlabel('Time (s)');
 ylabel('Pitch Angular Velocity (rad/s)');
+
+figure;
+plot(time_array, y_road, 'g');
+grid on;
+title('Road Displacement Over Time');
+xlabel('Time (s)');
+ylabel('Road Displacement (m)');
