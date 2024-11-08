@@ -1,0 +1,45 @@
+% master.m - EME 171 Lab 4 Simulation Script
+% This script sets up and runs the simulation to find the minimum surge tank
+% area required to prevent overflow when shutting down flow to the turbines.
+
+% Clear workspace, close figures, and clear command window
+clear all; close all; clc;
+
+% Define global variables for system parameters
+global rho g Ap Cf L Ip Q0 At
+
+% System constants
+rho = 1000;          % kg/m^3, water density
+g = 9.81;            % m/s^2, gravitational acceleration
+Ap = 0.1;            % m^2, pipe cross-sectional area
+Cf = 49000;          % kg/m^7, fluid resistance constant
+L = 50;              % m, length of each pipe section
+Ip = rho * L / Ap;   % kg/m^4, fluid inertia in pipe
+Q0 = 1.5;            % m^3/s, initial steady-state turbine flow
+
+% Simulation parameters
+tspan = [0 10];      % Simulation time span (adjust as needed)
+At = 1.0;            % Initial guess for tank area (m^2) - adjust to find minimum
+
+% Define initial conditions
+initial_conditions = compute_initial_conditions(Q0, At);
+
+% Run simulation using ODE45
+[t, s] = ode45(@(t, s) eqns(t, s), tspan, initial_conditions);
+
+% Plot results: Tank heights as a function of time
+figure;
+plot(t, s(:,3) / At, 'b', 'DisplayName', 'Tank 1 Height');
+hold on;
+plot(t, s(:,4) / At, 'r', 'DisplayName', 'Tank 2 Height');
+xlabel('Time (s)');
+ylabel('Water Height (m)');
+title('Water Height in Surge Tanks Over Time');
+legend;
+grid on;
+
+% Check if the tank area prevents overflow by observing max height
+max_height = max(max(s(:,3) / At), max(s(:,4) / At));
+fprintf('Maximum water height observed: %.2f m\n', max_height);
+
+% Adjust At iteratively until max_height is below the overflow threshold
