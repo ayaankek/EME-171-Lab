@@ -21,101 +21,83 @@ k_tf = 30000;               % Front tire stiffness (N/m)
 k_tr = 40000;               % Rear tire stiffness (N/m)
 L_wb = 1.6;                 % Wheel base distance (m)
 g = 9.81;                   % Acceleration due to gravity (m/s^2)
-
+L = 0.5;
 % Bump parameters
+a = Lcg_1;
+b = L_wb - Lcg_1;
 delta_max = 0.1;            % Max suspension deflection (m)
 A = 0.1;                    % Bump amplitude (m)
 bump_dist = 0.5;            % Distance between bumps (m)
+T_bump = L / vc; 
 
 % Initial conditions
 initial_p_J = 0;            % Pitch angular momentum (initially 0)
 initial_p_cr = 0;           % Vertical momentum of cycle and rider (initially 0)
-initial_q_sf = (m_tf * g - k_sf * delta_max) / k_sf;  % Front suspension spring displacement
-initial_q_sr = (m_tr * g - k_sr * delta_max) / k_sr;  % Rear suspension spring displacement
+initial_q_sf = (m_cr * g * b)/ (k_sf * (a+b));  % Front suspension spring displacement
+initial_q_sr = (m_cr * g * a)/ (k_sr * (a+b));  % Rear suspension spring displacement
 initial_p_tf = 0;           % Momentum of front tire mass (initially 0)
 initial_p_tr = 0;           % Momentum of rear tire mass (initially 0)
-initial_q_tf = m_tf * g / k_tf;   % Front tire deflection
-initial_q_tr = m_tr * g / k_tr;   % Rear tire deflection
+initial_q_tf = ((m_tf * g) + (m_cr * g * b / (a+b))) / (k_tf);   % Front tire deflection
+initial_q_tr = ((m_tr * g) + (m_cr * g * a / (a+b))) / (k_tr);   % Rear tire deflection
 
 initial = [initial_p_J; initial_p_cr; initial_q_sf; initial_q_sr; initial_p_tf; initial_p_tr; initial_q_tf; initial_q_tr];
 
 % Bump definition
 L = vc * bump_dist;            % Distance over the bump
 
-% Front tire bump timings
-t_front_start = 1;             % Time front tire hits the first bump
-t_front_apex = t_front_start + bump_dist / (2 * vc);
-t_front_end = t_front_start + bump_dist / vc;
+% Time points for front and rear tire over two bumps
+% Define time points for the front tire over the first and second bumps
+t_front_start = 1;
+t_front_apex = t_front_start + T_bump / 2;
+t_front_end = t_front_start + T_bump;
+t_rear_start = t_front_start + L_wb / vc;
+t_rear_apex = t_rear_start + T_bump / 2;
+t_rear_end = t_rear_start + T_bump;
 
-% Rear tire bump timings (non-overlapping)
-t_rear_start = t_front_end + bump_dist / vc;  % Rear tire starts after front tire ends
-t_rear_apex = t_rear_start + bump_dist / (2 * vc);
-t_rear_end = t_rear_start + bump_dist / vc;
-
-% Second bump for front and rear tires (no overlap)
-t_front_start2 = t_rear_end + bump_dist / vc;  % Front second bump starts after rear tire ends
-t_front_apex2 = t_front_start2 + bump_dist / (2 * vc);
-t_front_end2 = t_front_start2 + bump_dist / vc;
-
-t_rear_start2 = t_front_end2 + bump_dist / vc;  % Rear second bump starts after front tire's second bump
-t_rear_apex2 = t_rear_start2 + bump_dist / (2 * vc);
-t_rear_end2 = t_rear_start2 + bump_dist / vc;
+% Define time points for the front tire over the second bump
+t_front_start_2 = t_front_end + bump_dist / vc;
+t_front_apex_2 = t_front_start_2 + T_bump / 2;
+t_front_end_2 = t_front_start_2 + T_bump;
+t_rear_start_2 = t_front_start_2 + L_wb / vc;
+t_rear_apex_2 = t_rear_start_2 + T_bump / 2;
+t_rear_end_2 = t_rear_start_2 + T_bump;
 
 % Time control parameter
 natural_frequency = sqrt((k_sf + k_sr) / m_cr);  
 vibration_period = 1 / natural_frequency;        
 
-% Simulation
-FT = t_rear_end2 + 25 * vibration_period;
-step_size = vibration_period / 10;
 
-% Time array for the simulation
+% Simulation setup
+FT = t_rear_end_2 + 25 * vibration_period;
+step_size = vibration_period / 10;
 time_array = linspace(0, FT, 1000);
 
-% Define road displacement function for both front and rear bumps, ensuring no negative values
-road_displacement = @(t, bump_start, bump_apex, bump_end) max(0, A * (1 - abs((t - bump_start) / (bump_apex - bump_start))) .* (t >= bump_start & t <= bump_end));
+% Road displacement function (vectorized)
+road_displacement = @(t, bump_start, bump_end)(t >= bump_start & t <= bump_end) .* A .* sin(pi * (t - bump_start) / (bump_end - bump_start));
 
-% Road displacement for both front and rear tires (two instances for each)
-y_road_front1 = zeros(size(time_array));
-y_road_front2 = zeros(size(time_array));
-y_road_rear1 = zeros(size(time_array));
-y_road_rear2 = zeros(size(time_array));
+% Calculate displacements for front and rear tires for both bumps
+y_road_front1 = road_displacement(time_array, t_front_start, t_front_end);
+y_road_front2 = road_displacement(time_array, t_front_start_2, t_front_end_2);
+y_road_rear1 = road_displacement(time_array, t_rear_start, t_rear_end);
+y_road_rear2 = road_displacement(time_array, t_rear_start_2, t_rear_end_2);
 
-% Calculate displacement for both bumps for front and rear tires
-for i = 1:length(time_array)
-    t = time_array(i);
-    % First bump for front tire
-    y_road_front1(i) = road_displacement(t, t_front_start, t_front_apex, t_front_end);
-    % Second bump for front tire
-    y_road_front2(i) = road_displacement(t, t_front_start2, t_front_apex2, t_front_end2);
-    
-    % First bump for rear tire
-    y_road_rear1(i) = road_displacement(t, t_rear_start, t_rear_apex, t_rear_end);
-    % Second bump for rear tire
-    y_road_rear2(i) = road_displacement(t, t_rear_start2, t_rear_apex2, t_rear_end2);
-end
-
-% Get the maximum displacement for front and rear tires for both instances (before scaling)
+% Scaling displacement to match max value
 max_front1 = max(y_road_front1); % Peak for the first bump of front tire
 max_rear1 = max(y_road_rear1);   % Peak for the first bump of rear tire
 max_front2 = max(y_road_front2); % Peak for the second bump of front tire
 max_rear2 = max(y_road_rear2);   % Peak for the second bump of rear tire
 
-% Find the overall maximum peak value (across both bumps for front and rear tires)
 max_front = max(max_front1, max_front2);  % Max of front tire bumps
 max_rear = max(max_rear1, max_rear2);     % Max of rear tire bumps
-
-% Find the final peak value to scale to (the higher of the two)
 max_value = max(max_front, max_rear);
 
-% Scale each tire's displacement for both bumps to match the max value
+% Scale the displacement
 y_road_front1 = y_road_front1 / max(max_front1) * max_value;
 y_road_front2 = y_road_front2 / max(max_front2) * max_value;
-
 y_road_rear1 = y_road_rear1 / max(max_rear1) * max_value;
 y_road_rear2 = y_road_rear2 / max(max_rear2) * max_value;
 
-% Combine the displacement for both bumps for both tires
+% Combine displacements for both bumps for both tires
 y_road_front = y_road_front1 + y_road_front2;
 y_road_rear = y_road_rear1 + y_road_rear2;
 
@@ -123,6 +105,8 @@ y_road_rear = y_road_rear1 + y_road_rear2;
 [t, s] = ode45(@Lab3eqns, time_array, initial);
 
 % Plotting results
+
+% Front and Rear Suspension Deflections
 figure;
 plot(t, s(:,3), t, s(:,4));
 grid on;
@@ -131,6 +115,7 @@ xlabel('Time (s)');
 ylabel('Deflection (m)');
 legend('Front Suspension', 'Rear Suspension');
 
+% Heave Velocity Plot
 figure;
 plot(t, s(:,2) / m_cr, 'r');
 grid on;
@@ -138,6 +123,7 @@ title('Heave Velocity');
 xlabel('Time (s)');
 ylabel('Heave Velocity (m/s)');
 
+% Pitch Angular Velocity Plot
 figure;
 plot(t, s(:,1) / m_cr, 'b');
 grid on;
@@ -145,7 +131,7 @@ title('Pitch Angular Velocity');
 xlabel('Time (s)');
 ylabel('Pitch Angular Velocity (rad/s)');
 
-% Combined plot for road displacement with no negative values and identical max values
+% Combined Plot for Road Displacement 
 figure;
 plot(time_array, y_road_front, 'g', 'DisplayName', 'Front Tire');
 hold on;
@@ -155,18 +141,3 @@ title('Road Displacement for Front and Rear Tires');
 xlabel('Time (s)');
 ylabel('Road Displacement (m)');
 legend;
-
-% Test road displacement for different times
-t_test = linspace(0, FT, 1000);
-y_road_test = zeros(size(t_test));
-for i = 1:length(t_test)
-    y_road_test(i) = road_displacement(t_test(i), t_front_start, t_front_apex, t_front_end);
-end
-plot(t_test, y_road_test);
-title('Road Displacement over Time');
-xlabel('Time (s)');
-ylabel('Displacement (m)');
-
-% Display the peak values
-disp(['Peak value for front tire displacement (scaled): ', num2str(max(y_road_front)), ' meters']);
-disp(['Peak value for rear tire displacement (scaled): ', num2str(max(y_road_rear)), ' meters']);
