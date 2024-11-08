@@ -1,0 +1,40 @@
+function ds = eqns(t, s)
+    global rho g Ap Cf L Ip Q0 At
+
+    % Unpack the state variables
+    p1 = s(1);  % Fluid momentum in pipe section 1
+    p2 = s(2);  % Fluid momentum in pipe section 2
+    V1 = s(3);  % Volume in tank 1
+    V2 = s(4);  % Volume in tank 2
+
+    % Define turbine flow Q0 over time with a ramp-down from Q0 to 0 in 0.15 seconds
+    if t <= 0.15
+        Q_turbine = Q0 * (1 - t / 0.15); % Ramp-down function
+    else
+        Q_turbine = 0;
+    end
+
+    % Calculate pressures in each section
+    P1 = rho * g * (V1 / At); % Pressure due to water height in tank 1
+    P2 = rho * g * (V2 / At); % Pressure due to water height in tank 2
+
+    % Define the pressure drop based on fluid resistance in the pipes
+    deltaP1 = Cf * (p1 / (rho * L)) * abs(p1 / (rho * L));
+    deltaP2 = Cf * (p2 / (rho * L)) * abs(p2 / (rho * L));
+
+    % Define the state derivative equations from the bond graph
+    % 1. Fluid momentum in pipe section 1
+    p1_dot = (P1 - deltaP1 - P2) / L - Q_turbine;
+
+    % 2. Fluid momentum in pipe section 2
+    p2_dot = (P2 - deltaP2) / L;
+
+    % 3. Volume in tank 1
+    V1_dot = p1 / rho;
+
+    % 4. Volume in tank 2
+    V2_dot = p2 / rho;
+
+    % Output derivative as a column vector
+    ds = [p1_dot; p2_dot; V1_dot; V2_dot];
+end
