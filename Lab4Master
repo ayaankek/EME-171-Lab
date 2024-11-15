@@ -31,7 +31,33 @@ V2_initial = Q0_initial * L / Ap; % Initial tank 2 volume
 initial_conditions = [p1_initial; p2_initial; V1_initial; V2_initial];
 
 % Run simulation
-[time, state] = ode45(@equations_of_motion, tspan, initial_conditions);
+[time, state] = ode45(@equations_of_motion, tspan, initial_conditions); % Ensure this line matches equations_of_motion.m
+
+% Post-process and analyze results
+h1 = state(:, 3) / At_start; % Height in tank 1
+h2 = state(:, 4) / At_start; % Height in tank 2
+
+% Plot water heights in the tanks
+figure;
+plot(time, h1, 'b-', 'DisplayName', 'Tank 1 Height');
+hold on;
+plot(time, h2, 'r-', 'DisplayName', 'Tank 2 Height');
+xlabel('Time (s)');
+ylabel('Height (m)');
+legend;
+title('Water Heights in Surge Tanks');
+grid on;
+
+% Adjust tank area incrementally until no overflow occurs
+max_height = 10; % Example: assumed max allowable height (adjust as needed)
+while max(h1) > max_height || max(h2) > max_height
+    At_start = At_start + 0.05; % Increment tank area
+    [time, state] = ode45(@equations_of_motion, tspan, initial_conditions);
+    h1 = state(:, 3) / At_start;
+    h2 = state(:, 4) / At_start;
+end
+
+disp(['Minimum tank area without overflow: ', num2str(At_start), ' m^2']);
 
 % Post-process and analyze results
 analyze_results(time, state);
