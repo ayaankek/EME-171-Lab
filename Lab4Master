@@ -1,45 +1,37 @@
-% master.m - EME 171 Lab 4 Simulation Script
-% This script sets up and runs the simulation to find the minimum surge tank
-% area required to prevent overflow when shutting down flow to the turbines.
+% lab4_master.m
+% Master file for EME 171 Lab 4: Surge Tank Simulation
 
-% Clear workspace, close figures, and clear command window
-clear all; close all; clc;
+clear; clc; close all;
 
-% Define global variables for system parameters
-global rho g Ap Cf L Ip Q0 At
+% Global parameters
+global rho g Ap Cf L Q0_initial At_start
 
-% System constants
-rho = 1000;          % kg/m^3, water density
-g = 9.81;            % m/s^2, gravitational acceleration
-Ap = 0.1;            % m^2, pipe cross-sectional area
-Cf = 49000;          % kg/m^7, fluid resistance constant
-L = 50;              % m, length of each pipe section
-Ip = rho * L / Ap;   % kg/m^4, fluid inertia in pipe
-Q0 = 1.5;            % m^3/s, initial steady-state turbine flow
+% Constants
+rho = 1000;            % Water density (kg/m^3)
+g = 9.81;              % Gravity (m/s^2)
+Ap = 0.1;              % Pipe area (m^2)
+Cf = 49000;            % Fluid resistance constant (kg/m^7)
+L = 50;                % Pipe section lengths (m)
+Q0_initial = 1.5;      % Initial turbine flow (m^3/s)
 
-% Simulation parameters
-tspan = [0 10];      % Simulation time span (adjust as needed)
-At = 1.0;            % Initial guess for tank area (m^2) - adjust to find minimum
+% Time control parameters
+t_start = 0;           % Start time (s)
+t_end = 5;             % End time (s)
+time_step = 0.001;     % Time step (s)
+tspan = t_start:time_step:t_end;
 
-% Define initial conditions
-initial_conditions = compute_initial_conditions(Q0, At);
+% Initial steady-state tank area and other variables
+At_start = 0.2; % Starting tank area (m^2)
 
-% Run simulation using ODE45
-[t, s] = ode45(@(t, s) eqns(t, s), tspan, initial_conditions);
+% Calculate initial conditions
+p1_initial = rho * Q0_initial * Ap;
+p2_initial = rho * Q0_initial * Ap;
+V1_initial = Q0_initial * L / Ap; % Initial tank 1 volume
+V2_initial = Q0_initial * L / Ap; % Initial tank 2 volume
+initial_conditions = [p1_initial; p2_initial; V1_initial; V2_initial];
 
-% Plot results: Tank heights as a function of time
-figure;
-plot(t, s(:,3) / At, 'b', 'DisplayName', 'Tank 1 Height');
-hold on;
-plot(t, s(:,4) / At, 'r', 'DisplayName', 'Tank 2 Height');
-xlabel('Time (s)');
-ylabel('Water Height (m)');
-title('Water Height in Surge Tanks Over Time');
-legend;
-grid on;
+% Run simulation
+[time, state] = ode45(@equations_of_motion, tspan, initial_conditions);
 
-% Check if the tank area prevents overflow by observing max height
-max_height = max(max(s(:,3) / At), max(s(:,4) / At));
-fprintf('Maximum water height observed: %.2f m\n', max_height);
-
-% Adjust At iteratively until max_height is below the overflow threshold
+% Post-process and analyze results
+analyze_results(time, state);
