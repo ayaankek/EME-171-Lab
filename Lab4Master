@@ -1,37 +1,38 @@
-% lab4_master.m
-% Master file for EME 171 Lab 4: Surge Tank Simulation
+function dxdt = equations_of_motion(t, x)
+    % equations_of_motion.m
+    % Defines the system dynamics for the surge tank simulation.
+    global rho g Ap Cf L Q0_initial At_start
+    
+    % State variables
+    p1 = x(1); % Momentum in pipe section 1
+    p2 = x(2); % Momentum in pipe section 2
+    V1 = x(3); % Volume in tank 1
+    V2 = x(4); % Volume in tank 2
 
-clear; clc; close all;
+    % Volumetric flow rates
+    Q1 = p1 / (rho * Ap);
+    Q2 = p2 / (rho * Ap);
 
-% Global parameters
-global rho g Ap Cf L Q0_initial At_start
+    % Tank heights
+    h1 = V1 / At_start;
+    h2 = V2 / At_start;
 
-% Constants
-rho = 1000;            % Water density (kg/m^3)
-g = 9.81;              % Gravity (m/s^2)
-Ap = 0.1;              % Pipe area (m^2)
-Cf = 49000;            % Fluid resistance constant (kg/m^7)
-L = 50;                % Pipe section lengths (m)
-Q0_initial = 1.5;      % Initial turbine flow (m^3/s)
+    % Resistance flow
+    DeltaP1 = Cf * Q1 * abs(Q1);
+    DeltaP2 = Cf * Q2 * abs(Q2);
 
-% Time control parameters
-t_start = 0;           % Start time (s)
-t_end = 5;             % End time (s)
-time_step = 0.001;     % Time step (s)
-tspan = t_start:time_step:t_end;
+    % Turbine flow shut-down (ramp function)
+    if t <= 0.15
+        Q0 = Q0_initial * (1 - t / 0.15);
+    else
+        Q0 = 0;
+    end
 
-% Initial steady-state tank area and other variables
-At_start = 0.2; % Starting tank area (m^2)
+    % State derivatives
+    dp1dt = -DeltaP1 + rho * g * (h2 - h1) - rho * Q0;
+    dp2dt = -DeltaP2 - rho * g * h2;
+    dV1dt = Q1 - Q0;
+    dV2dt = Q0 - Q2;
 
-% Calculate initial conditions
-p1_initial = rho * Q0_initial * Ap;
-p2_initial = rho * Q0_initial * Ap;
-V1_initial = Q0_initial * L / Ap; % Initial tank 1 volume
-V2_initial = Q0_initial * L / Ap; % Initial tank 2 volume
-initial_conditions = [p1_initial; p2_initial; V1_initial; V2_initial];
-
-% Run simulation
-[time, state] = ode45(@equations_of_motion, tspan, initial_conditions);
-
-% Post-process and analyze results
-analyze_results(time, state);
+    dxdt = [dp1dt; dp2dt; dV1dt; dV2dt];
+end
