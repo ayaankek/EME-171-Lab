@@ -34,19 +34,35 @@ initial_conditions = [p1_initial; p2_initial; V1_initial; V2_initial];
 [time, state] = ode45(@equations_of_motion, tspan, initial_conditions); % Ensure this line matches equations_of_motion.m
 
 % Post-process and analyze results
-h1 = state(:, 3) / At_start; % Height in tank 1
-h2 = state(:, 4) / At_start; % Height in tank 2
+h1 = state(:, 3) / At_start; % Tank 1 height
+h2 = state(:, 4) / At_start; % Tank 2 height
 
-% Plot water heights in the tanks
+% Calculate turbine flow as a function of time
+Q0 = arrayfun(@(t) (Q0_initial * (1 - t / 0.15)) .* (t <= 0.15), tspan); % Ramp function
+
+% Plot tank heights vs. time
 figure;
+subplot(2, 1, 1);
 plot(time, h1, 'b-', 'DisplayName', 'Tank 1 Height');
 hold on;
 plot(time, h2, 'r-', 'DisplayName', 'Tank 2 Height');
 xlabel('Time (s)');
 ylabel('Height (m)');
+title('Tank Heights vs Time');
 legend;
-title('Water Heights in Surge Tanks');
 grid on;
+
+% Plot turbine input flow vs. time
+subplot(2, 1, 2);
+plot(tspan, Q0, 'k-', 'DisplayName', 'Turbine Flow Input');
+xlabel('Time (s)');
+ylabel('Flow (m^3/s)');
+title('Turbine Input Flow vs Time');
+legend;
+grid on;
+
+% Display the minimum tank area
+disp(['Desired tank area: ', num2str(At_start), ' m^2']);
 
 % Adjust tank area incrementally until no overflow occurs
 max_height = 10; % Example: assumed max allowable height (adjust as needed)
@@ -56,8 +72,6 @@ while max(h1) > max_height || max(h2) > max_height
     h1 = state(:, 3) / At_start;
     h2 = state(:, 4) / At_start;
 end
-
-disp(['Minimum tank area without overflow: ', num2str(At_start), ' m^2']);
 
 % Post-process and analyze results
 analyze_results(time, state);
